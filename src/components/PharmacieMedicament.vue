@@ -1,32 +1,74 @@
 <template>
-    <div class="medicament-item">
-      <div class="medicament-info denomination">
-        {{ props.medicament.denomination }}
-      </div>
-      <div class="medicament-info forme">
-        {{ props.medicament.formepharmaceutique }}
-      </div>
-      <div class="medicament-info qte">
-        {{ props.medicament.qte }}
-      </div>
-      <div class="medicament-info">
-        <img :src="props.medicament.photo" 
-             alt="Image du médicament" 
-             class="medicament-img"/>
-      </div>
-      <div class="medicament-actions">
-        <button @click="$emit('supprimer', props.medicament.id)" class="btn btn-delete">Supprimer</button>
-        <button @click="$emit('modifier', props.medicament)" class="btn btn-edit">Modifier</button>
-        <button @click="$emit('incrementer', props.medicament.id)" class="btn btn-increment">+1</button>
-        <button @click="$emit('decrementer', props.medicament.id)" class="btn btn-decrement">-1</button>
-      </div>
+    <div>
+        <div class="medicament-item">
+            <div class="medicament-info denomination">
+                {{ medicament.denomination }}
+            </div>
+            <div class="medicament-info forme">
+                {{ medicament.formepharmaceutique }}
+            </div>
+            <div class="medicament-info qte">
+                {{ medicament.qte }}
+            </div>
+            <div class="medicament-info">
+                <img :src="getImageUrl()" 
+                     alt="Image du médicament" 
+                     class="medicament-img"/>
+            </div>
+            <div class="medicament-actions">
+                <button @click="$emit('supprimer', medicament.id)" class="btn btn-delete">Supprimer</button>
+                <button @click="toggleModifierForm" class="btn btn-edit">Modifier</button>
+                <button @click="$emit('incrementer', medicament.id)" class="btn btn-increment">+1</button>
+                <button @click="$emit('decrementer', medicament.id)" class="btn btn-decrement">-1</button>
+            </div>
+        </div>
+        <PharmacieModifierForm 
+            v-if="showModifierForm" 
+            :medicament="medicament"
+            @modifier-medicament="handleModification"
+            @fermer-form="showModifierForm = false"
+        />
     </div>
 </template>
   
 <script setup>
-    import { defineProps } from "vue";
-    const props= defineProps(["medicament"]);
-    
+import { defineProps, defineEmits } from 'vue';
+import { ref } from 'vue';
+import PharmacieModifierForm from './PharmacieModifierForm.vue';
+
+const props = defineProps({
+    medicament: {
+        type: Object,
+        required: true
+    }
+});
+
+const emit = defineEmits(['supprimer', 'incrementer', 'decrementer', 'modifier']);
+
+const showModifierForm = ref(false);
+
+const toggleModifierForm = () => {
+    showModifierForm.value = !showModifierForm.value;
+};
+
+const handleModification = (medicamentModifie) => {
+    emit('modifier', medicamentModifie);
+    showModifierForm.value = false;
+};
+
+// L'url de base de l'API
+const baseUrl = "https://apipharmacie.pecatte.fr/api/6/medicaments";
+
+// Fonction pour construire l'URL de l'image
+function getImageUrl() {
+    if (!props.medicament.photo) return ''; // Retoune une chaîne vide si pas de photo
+    // Vérifier si la photo a déjà une URL absolue
+    if (props.medicament.photo.startsWith('http')) {
+        return props.medicament.photo;
+    }
+    // Construire l'URL absolue de l'image
+    return `${baseUrl}/${props.medicament.id}/photo`;
+}
 </script>
   
 <style scoped>
